@@ -1,0 +1,49 @@
+
+apply plugin: 'java'
+apply plugin: 'com.google.protobuf'
+apply plugin: 'eclipse'
+
+
+
+repositories {
+         mavenCentral()
+}
+
+
+dependencies {
+    compile 'org.slf4j:slf4j-api:1.7.13'
+	compile 'io.grpc:grpc-all:0.13.1'
+    testCompile 'junit:junit:4.12'
+
+}
+
+
+buildscript {
+
+repositories {
+         mavenCentral()
+}
+
+dependencies {
+     classpath 'com.google.protobuf:protobuf-gradle-plugin:0.7.4'
+
+}
+
+}
+
+protobuf {
+  protoc {
+    artifact = "com.google.protobuf:protoc:3.0.0-beta-2"
+  }
+  plugins {
+    grpc {
+      artifact = 'io.grpc:protoc-gen-grpc-java:0.13.1'
+    }
+  }
+  generateProtoTasks {
+    all()*.plugins {
+      grpc {}
+    }
+  }
+}
+
