@@ -16,6 +16,7 @@ import etcdserverpb.Rpc.PutRequest;
 import etcdserverpb.Rpc.PutResponse;
 import etcdserverpb.Rpc.RangeRequest;
 import etcdserverpb.Rpc.RangeResponse;
+import etcdserverpb.Rpc.WatchCancelRequest;
 import etcdserverpb.Rpc.WatchCreateRequest;
 import etcdserverpb.Rpc.WatchRequest;
 import etcdserverpb.Rpc.WatchResponse;
@@ -96,7 +97,6 @@ public class EtcdClient {
 		WatchCreateRequest createRequest = WatchCreateRequest.newBuilder().setKey(key).build();
 	    WatchRequest request = WatchRequest.newBuilder().setCreateRequest(createRequest).build();
 		requestObserver.onNext(request);
-
 	}
 
 	public long createLease(int ttl) {
@@ -122,7 +122,6 @@ public class EtcdClient {
 				try {
 					Thread.sleep(1000*response.getTTL()/2);
 				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				StreamObserver<LeaseKeepAliveRequest> requestObserver = leaseStub.leaseKeepAlive(this);
@@ -145,7 +144,11 @@ public class EtcdClient {
 
 	}
 
-	
-	
-
+	public void cancelWatch(long watchId,StreamObserver<WatchResponse> responseObserver) {
+		logger.info("try to cancel watch :" + watchId );
+		StreamObserver<WatchRequest> requestObserver =watchStub.watch(responseObserver);
+		WatchCancelRequest cancelRequest = WatchCancelRequest.newBuilder().setWatchId(watchId).build();
+	    WatchRequest request = WatchRequest.newBuilder().setCancelRequest(cancelRequest).build();
+		requestObserver.onNext(request);
+	}
 }

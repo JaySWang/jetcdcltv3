@@ -1,5 +1,6 @@
 package com.sap.etcdcltv3;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.*;
@@ -11,10 +12,10 @@ import etcdserverpb.Rpc.WatchResponse;
 import io.grpc.stub.StreamObserver;
 
 public class EtcdClientTest {
-	EtcdClient client;
+	static EtcdClient client;
 
-	@Before
-	public void init() {
+	@BeforeClass
+	public static void init() {
 		String host = "localhost";
 		int port = 2378;
 		client = new EtcdClient(host, port);
@@ -58,10 +59,12 @@ public class EtcdClientTest {
 		final ByteString key1 = ByteString.copyFromUtf8("range1");
 		ByteString value1 = ByteString.copyFromUtf8("good1");
 		final ByteString value2 = ByteString.copyFromUtf8("good2");
-
+		final ByteString value3 = ByteString.copyFromUtf8("good3");
+		final List<String> results = new ArrayList<String>();
 		client.put(key1, value1);
 		Assert.assertTrue(true);
 		StreamObserver<WatchResponse> responseObserver=new WatchStreamObserver(){
+
 			@Override
 			public void onNext(WatchResponse response) {
 				if(response.getCreated()){
@@ -69,7 +72,7 @@ public class EtcdClientTest {
 				}else{
 					String key = response.getEventsList().get(0).getKv().getKey().toStringUtf8();
 					String value = response.getEventsList().get(0).getKv().getValue().toStringUtf8();
-				    Assert.assertTrue(value.equals(value2.toStringUtf8()));
+					results.add(value);
 				    Assert.assertTrue(key.equals(key1.toStringUtf8()));
 				}
 			}
@@ -77,7 +80,12 @@ public class EtcdClientTest {
 			
 		client.watch(key1,responseObserver);
 		client.put(key1, value2);
-		Assert.assertTrue(true);
+		client.put(key1, value1);
+		
+		client.cancelWatch(((WatchStreamObserver) responseObserver).getWatchId(),responseObserver);
+		
+		client.put(key1, value3);
+		Assert.assertTrue(results.size()==2);
 
 	}
 	
@@ -88,9 +96,11 @@ public class EtcdClientTest {
 		final ByteString key1 = ByteString.copyFromUtf8("prefixRange1");
 		ByteString value1 = ByteString.copyFromUtf8("good1");
 		final ByteString value2 = ByteString.copyFromUtf8("good2");
-
+		final ByteString value3 = ByteString.copyFromUtf8("good3");
 		client.put(key1, value1);
 		Assert.assertTrue(true);
+		
+		final List<String> results = new ArrayList<String>();
 		StreamObserver<WatchResponse> responseObserver=new WatchStreamObserver(){
 			@Override
 			public void onNext(WatchResponse response) {
@@ -99,7 +109,7 @@ public class EtcdClientTest {
 				}else{
 					String key = response.getEventsList().get(0).getKv().getKey().toStringUtf8();
 					String value = response.getEventsList().get(0).getKv().getValue().toStringUtf8();
-				    Assert.assertTrue(value.equals(value2.toStringUtf8()));
+					results.add(value);
 				    Assert.assertTrue(key.equals(key1.toStringUtf8()));
 				}
 			}
@@ -107,7 +117,12 @@ public class EtcdClientTest {
 			
 		client.watchPrefix(prefix,responseObserver);
 		client.put(key1, value2);
-		Assert.assertTrue(true);
+		client.put(key1, value1);
+		
+		client.cancelWatch(((WatchStreamObserver) responseObserver).getWatchId(),responseObserver);
+		
+		client.put(key1, value3);
+		Assert.assertTrue(results.size()==2);
 
 	}
 	
@@ -146,10 +161,8 @@ public class EtcdClientTest {
 			Assert.assertEquals(value2.toStringUtf8(), aliveResult);
 	}
 	
-	
-	@After
-	public void end() {
-		
+	@AfterClass
+	public static void end() {
 		try {
 			client.shutdown();
 		} catch (InterruptedException e) {
