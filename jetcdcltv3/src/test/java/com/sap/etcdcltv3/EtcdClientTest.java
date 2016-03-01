@@ -27,6 +27,8 @@ public class EtcdClientTest {
 		ByteString value = ByteString.copyFromUtf8("nice");
 		client.put(key, value);
 		Assert.assertTrue(true);
+	//	Assert.assertEquals(1,client.delete(key));
+		client.delete(key);
 	}
 
 	@Test
@@ -52,11 +54,15 @@ public class EtcdClientTest {
 		Assert.assertTrue(results.contains(value1.toStringUtf8()));
 		Assert.assertTrue(results.contains(value2.toStringUtf8()));
 		Assert.assertFalse(results.contains(value3.toStringUtf8()));
+		
+		ByteString key4 = ByteString.copyFromUtf8("range4");
+		//Assert.assertEquals(3,client.delete(key1,key4));
+		client.delete(key1,key4);
 	}
 
 	@Test
 	public void testWatch(){
-		final ByteString key1 = ByteString.copyFromUtf8("range1");
+		final ByteString key1 = ByteString.copyFromUtf8("watch1");
 		ByteString value1 = ByteString.copyFromUtf8("good1");
 		final ByteString value2 = ByteString.copyFromUtf8("good2");
 		final ByteString value3 = ByteString.copyFromUtf8("good3");
@@ -86,7 +92,8 @@ public class EtcdClientTest {
 		
 		client.put(key1, value3);
 		Assert.assertTrue(results.size()==2);
-
+		//Assert.assertEquals(1,client.delete(key1));
+		client.delete(key1);
 	}
 	
 	
@@ -123,7 +130,9 @@ public class EtcdClientTest {
 		
 		client.put(key1, value3);
 		Assert.assertTrue(results.size()==2);
-
+		
+	//	Assert.assertEquals(1,client.delete(key1));
+		client.delete(key1);
 	}
 	
 	@Test
@@ -131,18 +140,18 @@ public class EtcdClientTest {
 		int ttl =5;
 		long leaseId = client.createLease(ttl);
 		Assert.assertTrue(leaseId!=0);
-		ByteString key = ByteString.copyFromUtf8("lease");
+		ByteString key1 = ByteString.copyFromUtf8("lease1");
 		ByteString value = ByteString.copyFromUtf8("good1");
 		
-		client.put(key, value, leaseId);
-		String result = client.range(key);
+		client.put(key1, value, leaseId);
+		String result = client.range(key1);
 		Assert.assertEquals(value.toStringUtf8(), result);
 		try {
 			Thread.sleep((ttl+1)*1000);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-		String expiredResult = client.range(key);
+		String expiredResult = client.range(key1);
 		Assert.assertNull(expiredResult);
 		
 		 leaseId = client.createLease(ttl);
@@ -159,9 +168,13 @@ public class EtcdClientTest {
 			}
 			String aliveResult = client.range(key2);
 			Assert.assertEquals(value2.toStringUtf8(), aliveResult);
+			
+			ByteString key3 = ByteString.copyFromUtf8("lease3");
+		//	Assert.assertEquals(1,client.delete(key1,key3));
+			client.delete(key1,key3);
 	}
 	
-	@AfterClass
+	//@AfterClass
 	public static void end() {
 		try {
 			client.shutdown();

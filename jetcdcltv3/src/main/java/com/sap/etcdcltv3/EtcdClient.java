@@ -8,6 +8,8 @@ import com.google.protobuf.ByteString;
 
 import etcdserverpb.KVGrpc;
 import etcdserverpb.LeaseGrpc;
+import etcdserverpb.Rpc.DeleteRangeRequest;
+import etcdserverpb.Rpc.DeleteRangeResponse;
 import etcdserverpb.Rpc.LeaseCreateRequest;
 import etcdserverpb.Rpc.LeaseCreateResponse;
 import etcdserverpb.Rpc.LeaseKeepAliveRequest;
@@ -30,6 +32,7 @@ public class EtcdClient {
 	private static final Logger logger = Logger.getLogger(EtcdClient.class.getName());
 	private final ManagedChannel channel;
 	private final KVGrpc.KVBlockingStub blockingStub;
+	private final KVGrpc.KVStub kvStub;
 	private final WatchGrpc.WatchStub watchStub;
 	private final LeaseGrpc.LeaseStub leaseStub;
 	private final LeaseGrpc.LeaseBlockingStub leaseBlockingStub;
@@ -37,6 +40,7 @@ public class EtcdClient {
 	public EtcdClient(String host, int port) {
 		channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext(true).build();
 		blockingStub = KVGrpc.newBlockingStub(channel);
+		kvStub = KVGrpc.newStub(channel);
 		watchStub = WatchGrpc.newStub(channel);
 		leaseStub = LeaseGrpc.newStub(channel);
 		leaseBlockingStub = LeaseGrpc.newBlockingStub(channel);
@@ -150,5 +154,19 @@ public class EtcdClient {
 		WatchCancelRequest cancelRequest = WatchCancelRequest.newBuilder().setWatchId(watchId).build();
 	    WatchRequest request = WatchRequest.newBuilder().setCancelRequest(cancelRequest).build();
 		requestObserver.onNext(request);
+	}
+
+	public long delete(ByteString key) {
+		DeleteRangeRequest request = DeleteRangeRequest.newBuilder().setKey(key).build();
+		DeleteRangeResponse response = blockingStub.deleteRange(request);
+		long numberOfDeleted = response.getDeleted();
+		return numberOfDeleted;
+	}
+	
+	public long delete(ByteString key,ByteString range_end) {
+		DeleteRangeRequest request = DeleteRangeRequest.newBuilder().setKey(key).setRangeEnd(range_end).build();
+		DeleteRangeResponse response = blockingStub.deleteRange(request);
+		long numberOfDeleted = response.getDeleted();
+		return numberOfDeleted;
 	}
 }
