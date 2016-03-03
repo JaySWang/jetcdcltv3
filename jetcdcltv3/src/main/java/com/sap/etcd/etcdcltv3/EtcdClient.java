@@ -14,6 +14,7 @@ import etcdserverpb.Rpc.LeaseCreateRequest;
 import etcdserverpb.Rpc.LeaseCreateResponse;
 import etcdserverpb.Rpc.LeaseKeepAliveRequest;
 import etcdserverpb.Rpc.LeaseKeepAliveResponse;
+import etcdserverpb.Rpc.LeaseRevokeRequest;
 import etcdserverpb.Rpc.PutRequest;
 import etcdserverpb.Rpc.PutResponse;
 import etcdserverpb.Rpc.RangeRequest;
@@ -62,7 +63,7 @@ public class EtcdClient {
 	}
 
 	public List<String> rangeKey(String key, String range_end) {
-		logger.info("try to range key:" + key + " to " +range_end);
+		logger.info("try to range key:" + key + " to " +range_end +" and return the keys");
 		RangeRequest request = RangeRequest.newBuilder().setKey(ByteString.copyFromUtf8(key)).setRangeEnd(ByteString.copyFromUtf8(range_end)).build();
 		RangeResponse response = blockingStub.range(request);
 		List<KeyValue> kvResults = response.getKvsList();
@@ -74,13 +75,13 @@ public class EtcdClient {
 	}
 	
 	public List<String> range(String key, String range_end) {
-		logger.info("try to range key:" + key + " to " +range_end);
+		logger.info("try to range key:" + key + " to " +range_end +" and return the keys");
 		RangeRequest request = RangeRequest.newBuilder().setKey(ByteString.copyFromUtf8(key)).setRangeEnd(ByteString.copyFromUtf8(range_end)).build();
 		RangeResponse response = blockingStub.range(request);
 		List<KeyValue> kvResults = response.getKvsList();
 		List<String> results = new ArrayList<String>();
 		for(KeyValue kv:kvResults){
-			results.add(kv.getKey().toStringUtf8());
+			results.add(kv.getValue().toStringUtf8());
 		}
 		return results;
 	}
@@ -168,8 +169,6 @@ public class EtcdClient {
 		keepalive.start();
 	}
 	
-	
-
 	public void cancelWatch(long watchId,StreamObserver<WatchResponse> responseObserver) {
 		logger.info("try to cancel watch :" + watchId );
 		StreamObserver<WatchRequest> requestObserver =watchStub.watch(responseObserver);
@@ -194,5 +193,11 @@ public class EtcdClient {
 	
 	public boolean isAvailable(){
 		return channel.isShutdown();
+	}
+
+	public void revokeLease(long leaseId) {
+		logger.info("try to revoke lease:" + leaseId);
+		LeaseRevokeRequest request = LeaseRevokeRequest.newBuilder().setID(leaseId).build();
+		leaseBlockingStub.leaseRevoke(request);
 	}
 }

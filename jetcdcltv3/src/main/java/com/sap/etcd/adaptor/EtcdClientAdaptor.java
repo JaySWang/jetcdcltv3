@@ -19,26 +19,21 @@ public class EtcdClientAdaptor {
 	static Map<WatchListener, Long> watchIds = new ConcurrentHashMap<WatchListener, Long>();
 
 	private int ttl = 10;
-	
+
+	private final long leaseId;
+
 	public EtcdClientAdaptor(String host, int port) {
 		etcdClient = new EtcdClient(host, port);
+		leaseId = etcdClient.createLease(ttl);
+		etcdClient.keepAliveLease(leaseId);
 	}
 
-	public void create(String path, boolean isDir) {
-		// keep alive when adding a service url
-		if (!isDir) {
-			long leaseId = etcdClient.createLease(ttl);
-			etcdClient.put(path, leaseId);
-			etcdClient.keepAliveLease(leaseId);
-		} else {
-			etcdClient.put(path);
-		}
+	public void create(String path) {
+		etcdClient.put(path, leaseId);
 	}
 
 	public List<String> addWatchListener(final String path, final WatchListener watchListener) {
-		final String range_end = getRangeEnd(path);
-		List<String> keys = etcdClient.rangeKey(path, range_end);
-		List<String> serviceUrls = processPathes(path,keys);
+		List<String> serviceUrls = getChildren(path);
 		StreamObserver<WatchResponse> responseObserver = new WatchStreamObserver() {
 			@Override
 			public void onNext(WatchResponse response) {
@@ -47,8 +42,7 @@ public class EtcdClientAdaptor {
 					watchIds.put(watchListener, watchId);
 				} else {
 					// delete or create events
-					List<String> keys = etcdClient.rangeKey(path, range_end);
-					List<String> newServiceUrls = processPathes(path,keys);
+					List<String> newServiceUrls = getChildren(path);
 					watchListener.update(path, newServiceUrls);
 				}
 			}
@@ -96,5 +90,17 @@ public class EtcdClientAdaptor {
 
 	public void delete(String urlPath) {
 		etcdClient.delete(urlPath);
+	}
+
+	public void close() throws InterruptedException {
+		etcdClient.revokeLease(leaseId);
+		etcdClient.shutdown();
+	}
+
+	public List<String> getChildren(String path) {
+		final String range_end = getRangeEnd(path);
+		List<String> keys = etcdClient.rangeKey(path, range_end);
+		List<String> serviceUrls = processPathes(path, keys);
+		return serviceUrls;
 	}
 }
