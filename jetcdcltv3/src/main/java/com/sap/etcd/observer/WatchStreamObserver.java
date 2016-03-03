@@ -24,5 +24,4 @@ public abstract class WatchStreamObserver implements StreamObserver<WatchRespons
 t.printStackTrace();		
 	}
 
-
 }

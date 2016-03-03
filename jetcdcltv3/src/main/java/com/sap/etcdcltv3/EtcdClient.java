@@ -50,9 +50,9 @@ public class EtcdClient {
 		channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
 	}
 
-	public String range(ByteString key) {
-		logger.info("try to get key:" + key.toStringUtf8());
-		RangeRequest request = RangeRequest.newBuilder().setKey(key).build();
+	public String range(String key) {
+		logger.info("try to get key:" + key);
+		RangeRequest request = RangeRequest.newBuilder().setKey(ByteString.copyFromUtf8(key)).build();
 		RangeResponse response = blockingStub.range(request);
 		String result = null; 
 		if(response.getKvsCount()>0){
@@ -61,44 +61,68 @@ public class EtcdClient {
 		return result;
 	}
 
-	public List<String> range(ByteString key, ByteString range_end) {
-		logger.info("try to range key:" + key + "to " +range_end);
-		RangeRequest request = RangeRequest.newBuilder().setKey(key).setRangeEnd(range_end).build();
+	public List<String> rangeKey(String key, String range_end) {
+		logger.info("try to range key:" + key + " to " +range_end);
+		RangeRequest request = RangeRequest.newBuilder().setKey(ByteString.copyFromUtf8(key)).setRangeEnd(ByteString.copyFromUtf8(range_end)).build();
 		RangeResponse response = blockingStub.range(request);
 		List<KeyValue> kvResults = response.getKvsList();
 		List<String> results = new ArrayList<String>();
 		for(KeyValue kv:kvResults){
-			results.add(kv.getValue().toStringUtf8());
+			results.add(kv.getKey().toStringUtf8());
 		}
 		return results;
 	}
 	
-	public void put(ByteString key, ByteString value, long lease) {
-		logger.info("try to put key:" + key.toStringUtf8() + " value:" + value.toStringUtf8() + " lease:"
+	public List<String> range(String key, String range_end) {
+		logger.info("try to range key:" + key + " to " +range_end);
+		RangeRequest request = RangeRequest.newBuilder().setKey(ByteString.copyFromUtf8(key)).setRangeEnd(ByteString.copyFromUtf8(range_end)).build();
+		RangeResponse response = blockingStub.range(request);
+		List<KeyValue> kvResults = response.getKvsList();
+		List<String> results = new ArrayList<String>();
+		for(KeyValue kv:kvResults){
+			results.add(kv.getKey().toStringUtf8());
+		}
+		return results;
+	}
+	
+	public void put(String key, String value, long lease) {
+		logger.info("try to put key:" + key + " value:" + value + " lease:"
 				+ lease);
-		PutRequest request = PutRequest.newBuilder().setKey(key).setValue(value).setLease(lease).build();
+		PutRequest request = PutRequest.newBuilder().setKey(ByteString.copyFromUtf8(key)).setValue(ByteString.copyFromUtf8(value)).setLease(lease).build();
 		PutResponse response = blockingStub.put(request);
 	}
 
-	public void put(ByteString key, ByteString value) {
-		logger.info("try to put key:" + key.toStringUtf8() + " value:" + value.toStringUtf8() );
-		PutRequest request = PutRequest.newBuilder().setKey(key).setValue(value).build();
+	public void put(String key,long lease) {
+		logger.info("try to put key:" + key+ " lease:"
+				+ lease);
+		PutRequest request = PutRequest.newBuilder().setKey(ByteString.copyFromUtf8(key)).setLease(lease).build();
 		PutResponse response = blockingStub.put(request);
 	}
 	
-	public void watchPrefix(ByteString prefix,StreamObserver<WatchResponse> responseObserver){
-		logger.info("try to watch prefix:" + prefix.toStringUtf8() );
+	public void put(String key, String value) {
+		logger.info("try to put key:" + key + " value:" + value);
+		PutRequest request = PutRequest.newBuilder().setKey(ByteString.copyFromUtf8(key)).setValue(ByteString.copyFromUtf8(value)).build();
+		PutResponse response = blockingStub.put(request);
+	}
+	public void put(String key) {
+		logger.info("try to put key:" + key);
+		PutRequest request = PutRequest.newBuilder().setKey(ByteString.copyFromUtf8(key)).build();	
+		PutResponse response = blockingStub.put(request);
+	}
+	
+	public void watchPrefix(String prefix,StreamObserver<WatchResponse> responseObserver){
+		logger.info("try to watch prefix:" + prefix );
 
 		StreamObserver<WatchRequest> requestObserver =watchStub.watch(responseObserver);
-		WatchCreateRequest createRequest = WatchCreateRequest.newBuilder().setPrefix(prefix).build();
+		WatchCreateRequest createRequest = WatchCreateRequest.newBuilder().setPrefix(ByteString.copyFromUtf8(prefix)).build();
 	    WatchRequest request = WatchRequest.newBuilder().setCreateRequest(createRequest).build();
 		requestObserver.onNext(request);
 	}
 	
-	public void watch(ByteString key,StreamObserver<WatchResponse> responseObserver){
-		logger.info("try to watch key:" + key.toStringUtf8() );
+	public void watch(String key,StreamObserver<WatchResponse> responseObserver){
+		logger.info("try to watch key:" + key);
 		StreamObserver<WatchRequest> requestObserver =watchStub.watch(responseObserver);
-		WatchCreateRequest createRequest = WatchCreateRequest.newBuilder().setKey(key).build();
+		WatchCreateRequest createRequest = WatchCreateRequest.newBuilder().setKey(ByteString.copyFromUtf8(key)).build();
 	    WatchRequest request = WatchRequest.newBuilder().setCreateRequest(createRequest).build();
 		requestObserver.onNext(request);
 	}
@@ -145,7 +169,6 @@ public class EtcdClient {
 			
 		});
 		keepalive.start();
-
 	}
 
 	public void cancelWatch(long watchId,StreamObserver<WatchResponse> responseObserver) {
@@ -156,15 +179,15 @@ public class EtcdClient {
 		requestObserver.onNext(request);
 	}
 
-	public long delete(ByteString key) {
-		DeleteRangeRequest request = DeleteRangeRequest.newBuilder().setKey(key).build();
+	public long delete(String key) {
+		DeleteRangeRequest request = DeleteRangeRequest.newBuilder().setKey(ByteString.copyFromUtf8(key)).build();
 		DeleteRangeResponse response = blockingStub.deleteRange(request);
 		long numberOfDeleted = response.getDeleted();
 		return numberOfDeleted;
 	}
 	
-	public long delete(ByteString key,ByteString range_end) {
-		DeleteRangeRequest request = DeleteRangeRequest.newBuilder().setKey(key).setRangeEnd(range_end).build();
+	public long delete(String key,String range_end) {
+		DeleteRangeRequest request = DeleteRangeRequest.newBuilder().setKey(ByteString.copyFromUtf8(key)).setRangeEnd(ByteString.copyFromUtf8(range_end)).build();
 		DeleteRangeResponse response = blockingStub.deleteRange(request);
 		long numberOfDeleted = response.getDeleted();
 		return numberOfDeleted;
