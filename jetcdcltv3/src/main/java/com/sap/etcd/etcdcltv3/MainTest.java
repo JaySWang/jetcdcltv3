@@ -1,4 +1,4 @@
-package com.sap.etcdcltv3;
+package com.sap.etcd.etcdcltv3;
 
 public class MainTest {
 

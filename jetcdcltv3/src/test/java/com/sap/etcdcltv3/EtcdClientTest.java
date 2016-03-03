@@ -7,6 +7,7 @@ import org.junit.*;
 
 import com.google.protobuf.ByteString;
 import com.sap.etcd.adaptor.EtcdClientAdaptor;
+import com.sap.etcd.etcdcltv3.EtcdClient;
 import com.sap.etcd.observer.WatchStreamObserver;
 
 import etcdserverpb.Rpc.WatchResponse;

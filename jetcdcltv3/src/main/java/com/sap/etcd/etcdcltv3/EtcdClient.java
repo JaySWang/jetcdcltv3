@@ -1,4 +1,4 @@
-package com.sap.etcdcltv3;
+package com.sap.etcd.etcdcltv3;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -156,9 +156,7 @@ public class EtcdClient {
 				LeaseKeepAliveRequest request = LeaseKeepAliveRequest.newBuilder().setID(id).build();
 				requestObserver.onNext(request);
 			}
-			
 		};
-		
 		Thread keepalive = new Thread(new Runnable(){
 			@Override
 			public void run() {
@@ -166,10 +164,11 @@ public class EtcdClient {
 				LeaseKeepAliveRequest request = LeaseKeepAliveRequest.newBuilder().setID(id).build();
 				requestObserver.onNext(request);				
 			}
-			
 		});
 		keepalive.start();
 	}
+	
+	
 
 	public void cancelWatch(long watchId,StreamObserver<WatchResponse> responseObserver) {
 		logger.info("try to cancel watch :" + watchId );
@@ -191,5 +190,9 @@ public class EtcdClient {
 		DeleteRangeResponse response = blockingStub.deleteRange(request);
 		long numberOfDeleted = response.getDeleted();
 		return numberOfDeleted;
+	}
+	
+	public boolean isAvailable(){
+		return channel.isShutdown();
 	}
 }
