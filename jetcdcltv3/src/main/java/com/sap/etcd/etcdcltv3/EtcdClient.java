@@ -192,7 +192,7 @@ public class EtcdClient {
 	}
 	
 	public boolean isAvailable(){
-		return channel.isShutdown();
+		return !(channel.isShutdown()||channel.isTerminated());
 	}
 
 	public void revokeLease(long leaseId) {

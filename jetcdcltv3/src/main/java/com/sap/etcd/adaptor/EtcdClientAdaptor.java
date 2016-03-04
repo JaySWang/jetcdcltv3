@@ -5,22 +5,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
-
 import com.sap.etcd.etcdcltv3.EtcdClient;
 import com.sap.etcd.observer.WatchStreamObserver;
-
 import etcdserverpb.Rpc.WatchResponse;
 import io.grpc.stub.StreamObserver;
 
 public class EtcdClientAdaptor {
 	EtcdClient etcdClient;
 	private static final Logger logger = Logger.getLogger(EtcdClient.class.getName());
-
 	static Map<WatchListener, Long> watchIds = new ConcurrentHashMap<WatchListener, Long>();
-
 	private int ttl = 10;
-
-	private final long leaseId;
+	private  long leaseId;
 
 	public EtcdClientAdaptor(String host, int port) {
 		etcdClient = new EtcdClient(host, port);
@@ -47,7 +42,6 @@ public class EtcdClientAdaptor {
 				}
 			}
 		};
-
 		etcdClient.watchPrefix(path, responseObserver);
 		return serviceUrls;
 	}
@@ -66,15 +60,18 @@ public class EtcdClientAdaptor {
 			return null;
 		}
 		for (String child : chilren) {
-			if (child.length() > path.length())
-				list.add(child.substring(path.length() + 1));
+			if (child.length() > path.length()){
+				String temp = child.substring(path.length() + 1);
+			//only need the next level pathes
+				String nextLevel = temp.split("/")[0];
+				list.add(nextLevel);			
+			}
 		}
 		return list;
 	}
 
 	public void removeWatchListener(WatchListener watchListener) {
 		long watchId = watchIds.get(watchListener);
-
 		StreamObserver<WatchResponse> responseObserver = new WatchStreamObserver() {
 			@Override
 			public void onNext(WatchResponse response) {

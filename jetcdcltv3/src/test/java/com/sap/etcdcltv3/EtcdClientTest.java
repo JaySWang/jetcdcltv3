@@ -2,11 +2,7 @@ package com.sap.etcdcltv3;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import org.junit.*;
-
-import com.google.protobuf.ByteString;
-import com.sap.etcd.adaptor.EtcdClientAdaptor;
 import com.sap.etcd.etcdcltv3.EtcdClient;
 import com.sap.etcd.observer.WatchStreamObserver;
 
@@ -179,13 +175,15 @@ public class EtcdClientTest {
 		client.delete(key1, key3);
 	}
 
-	// @AfterClass
+	@AfterClass
 	public static void end() {
-		try {
+		Assert.assertTrue(client.isAvailable());
+        try {
 			client.shutdown();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+		Assert.assertFalse(client.isAvailable());
 	}
 
 }
